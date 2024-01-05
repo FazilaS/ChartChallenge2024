@@ -1,0 +1,18 @@
+library(tidyverse)
+library(ggrepel)
+
+life<- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-12-05/life_expectancy.csv')
+df <- life %>% filter(Entity %in% c("Afghanistan","Bangladesh","India", "Pakistan","Bhutan","Maldives","Nepal","Sri Lanka") & Year >= 2000)
+
+data_label <- df                              # Modify data
+data_label$label <- NA
+data_label$label[which(data_label$Year == max(data_label$Year))] <-
+  data_label$Entity[which(data_label$Year == max(data_label$Year))]
+
+ggplot(df, aes(x= Year, y=LifeExpectancy, colour = Entity))+geom_line(linewidth =1.5)+theme_minimal()+
+  labs(x= "Year", y = "Life Expectancy", title = "South Asia Life Expectancy \n 2000 - 2021")+
+  geom_label_repel(
+    aes(label = label), data = data_label,size =5,nudge_x = 1, fontface  = 4,
+    na.rm = TRUE,min.segment.length = Inf, force_pull =0, direction = "y", hjust = -0.2)+
+  theme(axis.line = element_line(colour = "grey50"),panel.grid = element_blank(),plot.background = element_rect(fill = "#FFE4C7", colour = "#FFD5AB"),plot.title=element_text(color = "#009999", face='bold',size =18, hjust=0.5),legend.position = "none")
+
