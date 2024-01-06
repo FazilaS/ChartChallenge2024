@@ -1,0 +1,18 @@
+library(tidyverse)
+library(ggrepel)
+
+life<- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-12-05/life_expectancy.csv')
+df <- life %>% filter(Year %in% c("2000", "2021") &
+                        (Entity %in% c("Afghanistan","Pakistan", "India", "Sri Lanka", "Bhutan", "Bangladesh", "Maldives")))
+
+ggplot(df, aes(x= LifeExpectancy,y = reorder(Entity, LifeExpectancy))) +
+  theme_minimal()+
+  geom_line() +
+  geom_point(aes(color=Year), size = 3) +
+  geom_text_repel(aes(label = LifeExpectancy),min.segment.length = Inf ,size = 3.5,
+                  position = position_nudge_repel(x = 0.2,y = 0.25))+
+  theme(axis.line = element_line(colour = "grey50"),panel.grid = element_blank(),
+        plot.background = element_rect(fill = "white"),
+        plot.title=element_text(color = "black", face='bold',size =18, hjust=0.5),legend.position = "none")+
+  labs(title = "Life Expectancy in South Asia \n 2000 - 2021",x="Life Expectancy", y="Country")
+
