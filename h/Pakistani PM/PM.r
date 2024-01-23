@@ -13,6 +13,11 @@ df<- df %>%
 ### data edit ##########
 df[6,2] = 490
 
+
+df$Name <- factor(df$Name,                                    # Factor levels in decreasing order
+                  levels = df$Name[order(df$tenure, decreasing = TRUE)])
+
+View(df)
 df$image_file<-paste0('/cloud/project/', df$Name, '.png')
 
 ggplot(df,aes(tenure, Name , width = 0.782))+
@@ -35,6 +40,7 @@ ggplot(df,aes(tenure, Name , width = 0.782))+
   )+ 
   expand_limits(x = -30, y = 1) 
 
-
+ggsave("PM.png",
+       width = 12, height = 5) 
 
   
