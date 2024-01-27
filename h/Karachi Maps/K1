@@ -1,0 +1,102 @@
+library(tidyverse)
+library(osmdata)
+library(sf)
+library(lwgeom)
+
+lon_min <- 66.28 # xmin
+lon_max <- 67.5827 # xmax
+lat_min <- 24.42375 # ymin
+lat_max <- 25.67680 # ymax
+
+##bb <- c(66,67, 24,25)
+###bb_rect <- data.frame(
+  ##lat = c(lat_min, lat_max),
+ # lon = c(lon_min, lon_max)
+#)
+
+bb_rect <- data.frame(
+  lat = c(lat_min, lat_max),
+  lon = c(lon_min, lon_max)
+)%>%
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% 
+  st_bbox() %>%
+  st_as_sfc()
+
+coastline <- bb_rect%>%
+  opq()%>%
+  add_osm_feature(key = "natural", value = "coastline") %>%
+  osmdata_sf()
+
+streets <- bb_rect%>%
+  opq()%>%
+  add_osm_feature(key = "highway", 
+                  value = c("motorway", "primary", 
+                            "secondary", "tertiary", "motorway_link",
+                            "trunk_link","primary_link",
+                            "secondary_link",
+                            "tertiary_link")) %>%
+  osmdata_sf()
+
+small_streets <- bb_rect%>%
+  opq(timeout = 100)%>%
+  add_osm_feature(key = "highway", 
+                  value = c("residential","living_street",
+                            "unclassified",
+                            "service", "footway")) %>%
+  osmdata_sf()
+
+bb_rect_split <- bb_rect %>% 
+  st_split(coastline$osm_lines) %>% 
+  sf::st_collection_extract("POLYGON")
+
+
+
+#extract splitted rectangle parts
+land <- bb_rect_split[1]
+sea  <- bb_rect_split[2]
+
+map <- ggplot() +
+  geom_sf(
+    data = land,
+    fill = "#69CBB1",
+    color = NA
+  ) + 
+  geom_sf(
+    data = sea,
+    fill = "bisque",
+    color = NA
+  ) + 
+  geom_sf(
+    data = coastline$osm_multipolygons,
+    fill = "black",
+    color = NA
+  ) +
+ geom_sf(data = streets$osm_lines,
+              inherit.aes = FALSE,
+              color = '#706C6C',
+              size = .5,
+              alpha = .6) +
+ geom_sf(data = small_streets$osm_lines,
+              inherit.aes = FALSE,
+              color = '#7D7272',
+              size = .5,
+              alpha = .6) +
+  coord_sf(ylim = c(24.7, 25.07), 
+           xlim = c(66.9, 67.2), 
+           expand = FALSE)+
+  labs(title = "Karachi", 
+       subtitle = '24.7, 25.07° N, 66.95, 67.268° E')
+
+map <- map +  theme(plot.title = element_text(size=22, color='black',lineheight=1,
+                                hjust=0.5,face="bold.italic",vjust = -85,
+                                margin=margin(10,0,10,0)),
+      plot.subtitle = element_text(size= 8 , color="black", face='bold',
+                                   hjust=0.5,vjust = -210, margin=margin(0,0,15,0)),
+      axis.title.x=element_blank(),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      axis.title.y=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks.y=element_blank())
+
+ggsave("map.png")
